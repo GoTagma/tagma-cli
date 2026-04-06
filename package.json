@@ -1,13 +1,15 @@
 {
   "name": "@tagma/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "bin": {
     "tagma": "./src/index.ts"
   },
   "scripts": {
     "start": "bun run src/index.ts",
-    "test": "bun test"
+    "test": "bun test",
+    "release": "bun scripts/release.ts",
+    "release:publish": "bun scripts/release.ts --publish"
   },
   "dependencies": {
     "@tagma/sdk": "latest"
