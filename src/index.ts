@@ -7,7 +7,7 @@ import {
   InMemoryApprovalGateway,
   attachStdinApprovalAdapter,
   attachWebSocketApprovalAdapter,
-} from 'tagma-sdk';
+} from '@tagma/sdk';
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
