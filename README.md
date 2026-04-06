@@ -2,27 +2,19 @@
 
 A command-line tool for running **Tagma** Track & Task pipelines from YAML configuration files. Powered by [`@tagma/sdk`](https://github.com/GoTagma/tagma-sdk).
 
-## Installation
-
-> **Requires [Bun](https://bun.sh) v1.0 or later** — this CLI uses Bun-specific APIs and cannot run on Node.js.
-
-```bash
-bun add -g @tagma/cli
-```
-
-Or run without installing:
-
-```bash
-bunx @tagma/cli <pipeline.yaml>
-```
-
 ## Quick Start
+
+```bash
+bunx @tagma/cli ./pipeline.yaml
+```
+
+This loads the YAML pipeline definition, resolves plugins, and starts execution in the current directory.
+
+If you installed globally via `bun add -g @tagma/cli`, you can use the short form:
 
 ```bash
 tagma ./pipeline.yaml
 ```
-
-This loads the YAML pipeline definition, resolves plugins, and starts execution in the current directory.
 
 ## Options
 
@@ -38,13 +30,13 @@ The WebSocket port can also be configured via the `TAGMA_WS_PORT` environment va
 
 ```bash
 # Run a deployment pipeline
-tagma ./pipelines/deploy.yaml
+bunx @tagma/cli ./pipelines/deploy.yaml
 
 # Specify a custom working directory
-tagma ./pipelines/build.yaml --cwd /path/to/project
+bunx @tagma/cli ./pipelines/build.yaml --cwd /path/to/project
 
 # Use a custom WebSocket port for approval integration
-tagma ./pipelines/release.yaml --ws-port 8080
+bunx @tagma/cli ./pipelines/release.yaml --ws-port 8080
 ```
 
 ## Approval Gateway
