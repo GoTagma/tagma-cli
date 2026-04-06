@@ -4,21 +4,15 @@ A command-line tool for running **Tagma** Track & Task pipelines from YAML confi
 
 ## Installation
 
+> **Requires [Bun](https://bun.sh) v1.0 or later** — this CLI uses Bun-specific APIs and cannot run on Node.js.
+
 ```bash
-# npm
-npm install -g @tagma/cli
-
-# pnpm
-pnpm add -g @tagma/cli
-
-# bun
 bun add -g @tagma/cli
 ```
 
 Or run without installing:
 
 ```bash
-npx @tagma/cli <pipeline.yaml>
 bunx @tagma/cli <pipeline.yaml>
 ```
 

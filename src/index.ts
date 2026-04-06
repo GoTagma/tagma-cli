@@ -1,3 +1,5 @@
+#!/usr/bin/env bun
+
 import { resolve } from 'path';
 import {
   bootstrapBuiltins,
@@ -13,7 +15,7 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2);
 
   if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
-    console.log(`Usage: bun run src/index.ts <pipeline.yaml> [--cwd <dir>]`);
+    console.log(`Usage: tagma <pipeline.yaml> [--cwd <dir>] [--ws-port <port>]`);
     console.log(`\nRun a Track & Task pipeline from a YAML configuration file.`);
     process.exit(0);
   }
