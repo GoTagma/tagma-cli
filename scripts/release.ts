@@ -101,6 +101,10 @@ if (!shouldPublish) {
   process.exit(0);
 }
 
+// Regenerate lockfile after version bump to avoid duplicate-key errors
+console.log("\nRegenerating lockfile...");
+execSync("bun install", { cwd: ROOT, stdio: "inherit" });
+
 // Publish
 console.log(`\nPublishing ${pkg.name}@${newVersion}...`);
 execSync(`cd "${ROOT}" && bun publish --access public`, { stdio: "inherit" });
