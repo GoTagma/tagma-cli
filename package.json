@@ -1,0 +1,13 @@
+{
+  "name": "tagma-cli",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "bun-types": "latest",
+    "typescript": "^6.0.2"
+  }
+}
