@@ -91,6 +91,9 @@ if (!newVersion) {
 console.log(`\n--- Pending update ---`);
 console.log(`  ${pkg.name}: ${pkg.version} → ${newVersion}`);
 
+// Save original version for rollback
+const originalVersion = pkg.version;
+
 // Write version
 pkg.version = newVersion;
 writeJson(PKG_PATH, pkg);
@@ -107,7 +110,15 @@ execSync("bun install", { cwd: ROOT, stdio: "inherit" });
 
 // Publish
 console.log(`\nPublishing ${pkg.name}@${newVersion}...`);
-execSync(`cd "${ROOT}" && bun publish --access public`, { stdio: "inherit" });
-console.log(`✓ ${pkg.name}@${newVersion} published`);
+try {
+  execSync(`cd "${ROOT}" && bun publish --access public`, { stdio: "inherit" });
+  console.log(`✓ ${pkg.name}@${newVersion} published`);
+} catch (err) {
+  console.error(`\n✗ Failed to publish ${pkg.name}@${newVersion}`);
+  pkg.version = originalVersion;
+  writeJson(PKG_PATH, pkg);
+  console.error(`  ↩ Reverted package.json to ${originalVersion}`);
+  process.exit(1);
+}
 
 console.log("\nAll done 🎉");
