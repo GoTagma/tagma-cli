@@ -16,13 +16,25 @@ If you installed globally via `bun add -g @tagma/cli`, you can use the short for
 tagma ./pipeline.yaml
 ```
 
+## Commands
+
+| Command | Description |
+| --- | --- |
+| `tagma <pipeline.yaml>` | Shorthand for `tagma run` (backward-compatible). |
+| `tagma run <pipeline.yaml>` | Execute the pipeline. |
+| `tagma validate <pipeline.yaml>` | Validate without running (raw + resolved checks). |
+| `tagma compile <pipeline.yaml>` | Parse and validate, print a structured report. |
+| `tagma dag <pipeline.yaml>` | Print the task DAG in topological order. |
+
 ## Options
 
-| Flag | Description | Default |
-| --- | --- | --- |
-| `--cwd <dir>` | Working directory for pipeline execution | Current directory |
-| `--ws-port <port>` | Port for the approval WebSocket server | `3000` |
-| `-h`, `--help` | Show usage information | — |
+| Flag | Description | Applies to | Default |
+| --- | --- | --- | --- |
+| `--cwd <dir>` | Working directory for pipeline execution | all | Current directory |
+| `--ws-port <port>` | Port for the approval WebSocket server | `run` | `3000` |
+| `--json` | Emit JSON output | `validate`, `compile`, `dag` | — |
+| `-h`, `--help` | Show usage information | — | — |
+| `-v`, `--version` | Show CLI version | — | — |
 
 The WebSocket port can also be configured via the `TAGMA_WS_PORT` environment variable.
 
@@ -36,7 +48,16 @@ bunx @tagma/cli ./pipelines/deploy.yaml
 bunx @tagma/cli ./pipelines/build.yaml --cwd /path/to/project
 
 # Use a custom WebSocket port for approval integration
-bunx @tagma/cli ./pipelines/release.yaml --ws-port 8080
+bunx @tagma/cli run ./pipelines/release.yaml --ws-port 8080
+
+# Validate a pipeline before committing
+tagma validate ./pipelines/deploy.yaml
+
+# Inspect the task DAG (machine-readable)
+tagma dag ./pipelines/deploy.yaml --json
+
+# Compile and get a structured report
+tagma compile ./pipelines/deploy.yaml --json
 ```
 
 ## Approval Gateway
@@ -52,7 +73,7 @@ Tagma pipelines can reference third-party plugins. Any plugins declared in your 
 
 ## Requirements
 
-- [Bun](https://bun.sh) v1.0 or later
+- [Bun](https://bun.sh) v1.3 or later
 
 ## License
 
