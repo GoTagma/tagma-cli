@@ -1,21 +1,19 @@
 #!/usr/bin/env bun
 
-import { resolve, basename } from 'path';
-import {
-  bootstrapBuiltins,
-  loadPipeline,
-  loadPlugins,
-  runPipeline,
-  buildDag,
-  compileYamlContent,
-  InMemoryApprovalGateway,
-  attachStdinApprovalAdapter,
-  attachWebSocketApprovalAdapter,
-} from '@tagma/sdk';
+import { basename, resolve } from 'path';
+import { createTagma } from '@tagma/sdk';
+import { InMemoryApprovalGateway } from '@tagma/sdk/approval';
+import { buildDag } from '@tagma/sdk/config';
+import { compileYamlContent, loadPipeline } from '@tagma/sdk/yaml';
+import { attachStdinApprovalAdapter } from '@tagma/runtime-bun/adapters/stdin-approval';
+import { attachWebSocketApprovalAdapter } from '@tagma/runtime-bun/adapters/websocket-approval';
 import pkg from '../package.json' with { type: 'json' };
+import type { PipelineConfig } from '@tagma/sdk';
+import type { Dag } from '@tagma/sdk/config';
 
 type Command = 'run' | 'validate' | 'compile' | 'dag';
 const COMMANDS = new Set<Command>(['run', 'validate', 'compile', 'dag']);
+type PipelineTask = PipelineConfig['tracks'][number]['tasks'][number];
 
 interface ParsedArgs {
   command: Command;
@@ -28,7 +26,7 @@ interface ParsedArgs {
 }
 
 function printHelp(): void {
-  console.log(`tagma — Track & Task pipeline runner
+  console.log(`tagma - Track & Task pipeline runner
 
 Usage:
   tagma <pipeline.yaml> [options]              # shorthand for "tagma run"
@@ -107,6 +105,10 @@ function parseWsPortDefault(): number {
   return 3000;
 }
 
+function taskType(task: PipelineTask): 'command' | 'prompt' {
+  return task.command !== undefined && task.prompt === undefined ? 'command' : 'prompt';
+}
+
 async function readYamlOrExit(path: string | undefined): Promise<{ content: string; path: string }> {
   if (!path) {
     console.error('Missing pipeline YAML file. See `tagma --help`.');
@@ -123,23 +125,12 @@ async function readYamlOrExit(path: string | undefined): Promise<{ content: stri
 async function cmdRun(args: ParsedArgs): Promise<number> {
   const { content } = await readYamlOrExit(args.file);
 
-  bootstrapBuiltins();
-
-  let config;
+  let config: PipelineConfig;
   try {
     config = await loadPipeline(content, args.cwd);
   } catch (err: unknown) {
     console.error(`Configuration error: ${errMsg(err)}`);
     return 1;
-  }
-
-  if (config.plugins && config.plugins.length > 0) {
-    try {
-      await loadPlugins(config.plugins);
-    } catch (err: unknown) {
-      console.error(`Plugin load error: ${errMsg(err)}`);
-      return 1;
-    }
   }
 
   const approvalGateway = new InMemoryApprovalGateway();
@@ -149,7 +140,8 @@ async function cmdRun(args: ParsedArgs): Promise<number> {
 
   console.log(`Starting pipeline: "${config.name}"`);
   try {
-    const result = await runPipeline(config, args.cwd, { approvalGateway });
+    const tagma = createTagma();
+    const result = await tagma.run(config, { cwd: args.cwd, approvalGateway });
     return result.success ? 0 : 1;
   } finally {
     stdinAdapter.detach();
@@ -180,7 +172,6 @@ async function cmdCompile(args: ParsedArgs): Promise<number> {
 async function cmdValidate(args: ParsedArgs): Promise<number> {
   const { content, path } = await readYamlOrExit(args.file);
 
-  // Raw-level validation first (structured path+message errors).
   const compile = compileYamlContent(content, { sourceName: basename(path) });
   if (!compile.success) {
     if (args.json) {
@@ -192,8 +183,6 @@ async function cmdValidate(args: ParsedArgs): Promise<number> {
     return 1;
   }
 
-  // Resolved-level validation (inheritance, port wiring) — same path runPipeline takes.
-  bootstrapBuiltins();
   try {
     await loadPipeline(content, args.cwd);
   } catch (err: unknown) {
@@ -215,9 +204,8 @@ async function cmdValidate(args: ParsedArgs): Promise<number> {
 
 async function cmdDag(args: ParsedArgs): Promise<number> {
   const { content } = await readYamlOrExit(args.file);
-  bootstrapBuiltins();
 
-  let config;
+  let config: PipelineConfig;
   try {
     config = await loadPipeline(content, args.cwd);
   } catch (err: unknown) {
@@ -225,7 +213,7 @@ async function cmdDag(args: ParsedArgs): Promise<number> {
     return 1;
   }
 
-  let dag;
+  let dag: Dag;
   try {
     dag = buildDag(config);
   } catch (err: unknown) {
@@ -234,12 +222,12 @@ async function cmdDag(args: ParsedArgs): Promise<number> {
   }
 
   if (args.json) {
-    const nodes = dag.sorted.map(id => {
+    const nodes = dag.sorted.map((id) => {
       const n = dag.nodes.get(id)!;
       return {
         taskId: n.taskId,
         track: n.track.id,
-        type: n.task.type,
+        type: taskType(n.task),
         dependsOn: n.dependsOn,
         ...(n.resolvedContinueFrom ? { continueFrom: n.resolvedContinueFrom } : {}),
       };
@@ -247,12 +235,12 @@ async function cmdDag(args: ParsedArgs): Promise<number> {
     console.log(JSON.stringify({ pipeline: config.name, nodes }, null, 2));
   } else {
     console.log(`Pipeline: ${config.name}`);
-    console.log(`Tasks (topological order):`);
+    console.log('Tasks (topological order):');
     for (const id of dag.sorted) {
       const n = dag.nodes.get(id)!;
       const deps = n.dependsOn.length > 0 ? `  [deps: ${n.dependsOn.join(', ')}]` : '';
       const cont = n.resolvedContinueFrom ? `  [continue_from: ${n.resolvedContinueFrom}]` : '';
-      console.log(`  ${id}  (${n.task.type})${deps}${cont}`);
+      console.log(`  ${id}  (${taskType(n.task)})${deps}${cont}`);
     }
   }
   return 0;
@@ -283,15 +271,23 @@ async function main(): Promise<void> {
 
   let code: number;
   switch (args.command) {
-    case 'run':      code = await cmdRun(args); break;
-    case 'validate': code = await cmdValidate(args); break;
-    case 'compile':  code = await cmdCompile(args); break;
-    case 'dag':      code = await cmdDag(args); break;
+    case 'run':
+      code = await cmdRun(args);
+      break;
+    case 'validate':
+      code = await cmdValidate(args);
+      break;
+    case 'compile':
+      code = await cmdCompile(args);
+      break;
+    case 'dag':
+      code = await cmdDag(args);
+      break;
   }
   process.exit(code);
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error(`Fatal error: ${errMsg(err)}`);
   process.exit(1);
 });

@@ -1,6 +1,6 @@
 # @tagma/cli
 
-A command-line tool for running **Tagma** Track & Task pipelines from YAML configuration files. Powered by [`@tagma/sdk`](https://github.com/GoTagma/tagma-sdk).
+A command-line tool for running **Tagma** Track & Task pipelines from YAML configuration files. Powered by [`@tagma/sdk`](https://github.com/GoTagma/tagma-mono/tree/main/packages/sdk).
 
 ## Quick Start
 
@@ -20,7 +20,7 @@ tagma ./pipeline.yaml
 
 | Command | Description |
 | --- | --- |
-| `tagma <pipeline.yaml>` | Shorthand for `tagma run` (backward-compatible). |
+| `tagma <pipeline.yaml>` | Shorthand for `tagma run`. |
 | `tagma run <pipeline.yaml>` | Execute the pipeline. |
 | `tagma validate <pipeline.yaml>` | Validate without running (raw + resolved checks). |
 | `tagma compile <pipeline.yaml>` | Parse and validate, print a structured report. |
@@ -32,9 +32,9 @@ tagma ./pipeline.yaml
 | --- | --- | --- | --- |
 | `--cwd <dir>` | Working directory for pipeline execution | all | Current directory |
 | `--ws-port <port>` | Port for the approval WebSocket server | `run` | `3000` |
-| `--json` | Emit JSON output | `validate`, `compile`, `dag` | — |
-| `-h`, `--help` | Show usage information | — | — |
-| `-v`, `--version` | Show CLI version | — | — |
+| `--json` | Emit JSON output | `validate`, `compile`, `dag` | none |
+| `-h`, `--help` | Show usage information | all | none |
+| `-v`, `--version` | Show CLI version | all | none |
 
 The WebSocket port can also be configured via the `TAGMA_WS_PORT` environment variable.
 
@@ -62,14 +62,14 @@ tagma compile ./pipelines/deploy.yaml --json
 
 ## Approval Gateway
 
-Pipeline steps that require human approval are gated by a dual-channel approval system. Both channels are active simultaneously — the first response wins:
+Pipeline steps that require human approval are gated by a dual-channel approval system. Both channels are active simultaneously; the first response wins:
 
-- **Terminal (stdin)** — approve or reject interactively in your terminal session.
-- **WebSocket** (`ws://localhost:<port>`) — connect from a dashboard, Slack bot, CI system, or any external automation.
+- **Terminal (stdin)**: approve or reject interactively in your terminal session.
+- **WebSocket** (`ws://localhost:<port>`): connect from a dashboard, Slack bot, CI system, or any external automation.
 
 ## Plugins
 
-Tagma pipelines can reference third-party plugins. Any plugins declared in your YAML configuration are automatically discovered and loaded at startup. See the [`@tagma/sdk` documentation](https://github.com/GoTagma/tagma-sdk) for details on writing and publishing plugins.
+Tagma pipelines can reference third-party plugins. Any plugins declared in your YAML configuration are automatically discovered and loaded at startup. See the [`@tagma/sdk` documentation](https://github.com/GoTagma/tagma-mono/tree/main/packages/sdk) for details on writing and publishing plugins.
 
 ## Requirements
 
