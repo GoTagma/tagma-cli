@@ -1,6 +1,6 @@
 {
   "name": "@tagma/cli",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -21,9 +21,9 @@
     "bun": ">=1.3"
   },
   "dependencies": {
-    "@tagma/core": "^0.1.1",
-    "@tagma/runtime-bun": "^0.1.1",
-    "@tagma/sdk": "^0.7.6"
+    "@tagma/core": "latest",
+    "@tagma/runtime-bun": "latest",
+    "@tagma/sdk": "latest"
   },
   "devDependencies": {
     "bun-types": "latest",
